@@ -1,28 +1,37 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <main id="main-content-container">
+      <UsMap/>
+      <MapSidebar/>
+    </main>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import UsMap from './components/UsMap.vue'
+import MapSidebar from './components/MapSidebar.vue'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    UsMap,
+    MapSidebar
+  },
+  created(){
+    document.title = 'Jokkull Color Coding Map';
   }
 }
 </script>
 
 <style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+body {
+  margin: 0;
+}
+#main-content-container {
+  margin: 0 auto;
+  padding-top: 40px;
+  width: 1400px;
+  display: flex;
+  align-items: flex-start;
 }
 </style>

@@ -1,55 +1,38 @@
 import { createStore } from 'vuex';
 
 const state = {
+  allCountyData: new Map(),
   currSelectionsData: new Map(),
   currSelectionColor: '',
   formerSelectionsColors: []
 };
 
 const getters = {
-  currSelectionsColors(state){
-    let selectionsColorsArr = [];
-    state.currSelectionsData.forEach(countyObj => {
-      if(!selectionsColorsArr.includes(countyObj.currColor)){
-        selectionsColorsArr.push(countyObj.currColor);
-      }
+  popTotalFromColorGroup: (state) => (selectionColor) => {
+    let sum = 0;
+    state.currSelectionsData.get(selectionColor).forEach(countyDatumObj => {
+      sum += countyDatumObj.countyPop;
     });
-    return selectionsColorsArr;
-  },
-  // inner function inside getter allows the passing of args
-  selectionOfColor: (state) => (color) => {
-    let selectionArr = [];
-    state.currSelectionsData.forEach(countyObj => {
-      if(countyObj.currColor == color){
-        selectionArr.push(countyObj);
-      }
-    });
-    return selectionArr;
-  },
-  selectionPopTotalFromColor: (state, getters) => (color) => {
-    let selectionArr = getters.selectionOfColor(color);
-    return selectionArr.reduce((accumulatedPop, countyObj) => {
-      return accumulatedPop + countyObj.countyPop;
-    }, 0);
+    return sum;
   }
 };
 
 const mutations = {
+  insertToAllCountyData(state, countyDatumObj){
+    state.allCountyData.set(countyDatumObj.FIPS, countyDatumObj);
+  },
+  addColorGroupToSelectionsData(state, selectionColor){
+    state.currSelectionsData.set(selectionColor, new Map());
+  },
+  addCountyToSelectionsData(state, {countyFIPS, selectionColor}){
+    state.currSelectionsData.get(selectionColor)
+      .set(countyFIPS, {...state.allCountyData.get(countyFIPS), selectionColor});
+  },
   updateCurrSelectionColor(state, newColor){
     state.currSelectionColor = newColor;
   },
   saveFormerSelectionColor(state, formerColor){
     state.formerSelectionsColors.push(formerColor);
-  },
-  insertSelectionDatum(state, countyDatumObj){
-    state.currSelectionsData.set(countyDatumObj.FIPS, countyDatumObj);
-  },
-  addPopToSelectionDatum(state, payload){
-    let currCountyDatum = state.currSelectionsData.get(payload.countyFIPS);
-    state.currSelectionsData.set(
-      payload.countyFIPS, 
-      {...currCountyDatum, ...payload.expandedData}
-    );
   }
 };
 
@@ -63,50 +46,40 @@ const actions = {
       commit('saveFormerSelectionColor', formerColor);
     }
   },
-  insertSelectionDatum({state, commit}, countyDatumObj){
-    /*  
-    currSelectionsData:
-      04005: { 
-        FIPS: 04005, 
-        stateCode: 04, 
-        countyCode: 005, 
-        countyName: 'County Name', 
-        stateName: 'State Name', 
-        currColor: '#020202'
-      }
-    */
-    
-    // prevent duplicates - only insert county, if it's not in the dataset
-    if(!state.currSelectionsData.has(countyDatumObj.FIPS)){
-      commit('insertSelectionDatum', countyDatumObj);
-    }
-  },
-  fetchCountyPop({state, commit}, {countyDatumObj, callbackOnFinish}){
-    fetch(`https://api.census.gov/data/2019/pep/population?get=POP,NAME&for=county:${countyDatumObj.countyCode}&in=state:${countyDatumObj.stateCode}`)
+  async fetchAllCountyData({state, commit}){
+    await fetch(`https://api.census.gov/data/2019/pep/population?get=POP,NAME&for=county:*`)
     .then(response => response.json())
     .then(data => {
-      // expand countyDatumObj with additional info from API
-      countyDatumObj.countyPop = parseInt(data[1][0]);
-      countyDatumObj.stateName = ((data[1][1]).split(',')[1]).trim();
+      for(let cpdIdx = 1; cpdIdx < data.length; cpdIdx++){
+        // start at 1 to skip the first item (data structure info)
 
-      // if currSelectionsData still not populated with new county obj, add it
-      if(!state.currSelectionsData.has(countyDatumObj.FIPS)){
-        commit('insertSelectionDatum', countyDatumObj);
-      }else{
-        // otherwise, just append new fields to existing obj
-        commit('addPopToSelectionDatum', {
-          countyFIPS: countyDatumObj.FIPS, 
-          expandedData: {
-            countyPop: countyDatumObj.countyPop,
-            stateName: countyDatumObj.stateName
-          }
+        let countyPopDatum = data[cpdIdx];
+        
+        let stateCode = countyPopDatum[2];
+        let countyCode = countyPopDatum[3];
+        let FIPS = stateCode + countyCode;
+        let splitNameArr = (countyPopDatum[1]).split(',');
+        let stateName = (splitNameArr[1]).trim();
+        let countyName = (splitNameArr[0]).replace('County', '').trim();
+        let countyPop = Number(countyPopDatum[0]);
+
+        commit('insertToAllCountyData', {
+          FIPS, stateCode, countyCode, stateName, countyName, countyPop
         });
-
-        // callback
-        if(callbackOnFinish != undefined){
-          callbackOnFinish();
-        }
       }
+    });
+  },
+  addCountyToSelectionsData({state, commit}, {countyFIPS, selectionColor}){
+    // if currSelectionsData has no entry for color, add one
+    if(!state.currSelectionsData.has(selectionColor)){
+      commit('addColorGroupToSelectionsData', selectionColor);
+    }
+    // don't add duplicates
+    if(!state.currSelectionsData.get(selectionColor).has(countyFIPS)){
+      commit('addCountyToSelectionsData', {countyFIPS, selectionColor});
+    }
+    state.currSelectionsData.get(selectionColor).forEach(countyObj => {
+      console.log(countyObj.countyName);
     });
   }
 };

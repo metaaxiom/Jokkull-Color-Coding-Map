@@ -16,18 +16,22 @@ export default {
     return {}
   },
   computed: {
-    ...mapState(['currSelectionsData', 'currSelectionColor'])
+    ...mapState(['allCountyData', 'currSelectionsData', 'currSelectionColor'])
   },
   mounted(){
     this.init();
   },
   methods: {
     ...mapActions([
-      'fetchCountyPop', 
-      'insertSelectionDatum',
+      'fetchAllCountyData',
+      'addCountyToSelectionsData',
       'saveFormerSelectionColor'
     ]),
     init(){
+      this.fetchAllCountyData().then(() => {
+        //console.log('All data fetched:', this.allCountyData);
+      })
+
       //const width = 960;
       //const height = 600;
       let self = this;
@@ -61,21 +65,19 @@ export default {
           .attr('pointer-events', 'visible')
           .on('click', function(target){
             if(d3.event.shiftKey){
-              let countyDatumObj = self.buildCountyDatumObj(target, self.currSelectionColor);
-
               // prevent duplicate insertion fetching for selected counties
               if(this.style.fill == ''){
-                this.style.fill = self.currSelectionColor;
+                let countyFIPS = target.id;
+                let selectionColor = self.currSelectionColor;
+
+                this.style.fill = selectionColor;
                 self.saveFormerSelectionColor(); // won't save duplicates
-                self.insertSelectionDatum(countyDatumObj);
-                self.fetchCountyPop({countyDatumObj});
+                self.addCountyToSelectionsData({countyFIPS, selectionColor});
               }
             }
           });
         
         let hoverEnabled = false;
-        // tracks counties recently inserted into currSelectionsData
-        let bufferFIPSArr = [];
         features
           .on('mousedown', x => {
             if(d3.event.shiftKey){
@@ -84,27 +86,17 @@ export default {
           })
           .on('mouseup', x => {
             hoverEnabled = false
-            bufferFIPSArr.forEach((FIPS, idx) => {
-              self.fetchCountyPop({
-                countyDatumObj: self.currSelectionsData.get(FIPS),
-                callbackOnFinish: () => {
-                  if(idx == bufferFIPSArr.length-1){
-                    bufferFIPSArr = []; // clear buffer arr
-                  }
-                }
-              });
-            });
           });
 
         features.selectAll("path").on('mouseover', function(target, d){
           if(hoverEnabled){
-            let countyDatumObj = self.buildCountyDatumObj(target, self.currSelectionColor);
-            
             if(this.style.fill == ''){
-              this.style.fill = self.currSelectionColor;
+              let countyFIPS = target.id;
+              let selectionColor = self.currSelectionColor;
+
+              this.style.fill = selectionColor;
               self.saveFormerSelectionColor(); // won't save duplicates
-              bufferFIPSArr.push(countyDatumObj.FIPS);
-              self.insertSelectionDatum(countyDatumObj);
+              self.addCountyToSelectionsData({countyFIPS, selectionColor});
             }
           }
         })
@@ -120,16 +112,6 @@ export default {
           .attr("class", "state-border")
           .attr("d", path);
       });
-    },
-    buildCountyDatumObj(countyElement, currCountyColor = this.currSelectionColor){
-      // FIPS = state code (2-digit) + county code (3-digit)
-      return {
-        FIPS: countyElement.id,
-        stateCode: countyElement.id.toString().substring(0, 2),
-        countyCode: countyElement.id.toString().substring(2),
-        countyName: countyElement.properties.name,
-        currColor: currCountyColor
-      }
     }
   }
 }

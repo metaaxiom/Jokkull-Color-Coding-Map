@@ -26,6 +26,7 @@ export default {
 <style>
 body {
   margin: 0;
+  font-family: 'Lato';
 }
 #main-content-container {
   margin: 0 auto;

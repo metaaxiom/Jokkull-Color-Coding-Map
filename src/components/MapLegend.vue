@@ -1,6 +1,6 @@
 <template>
   <div id="map-legend">
-    <div v-for="(selectionColor, scIdx) in currSelectionsColors" :key="scIdx" class="legend-selection-container">
+    <div v-for="(selectionColor, scIdx) in selectedColorGroups" :key="scIdx" class="legend-selection-container">
       <div class="legend-selection-box" :style="`border-color: ${selectionColor};`">
         <div class="legend-selection-box__header" :style="`background-color: ${selectionColor};`">
           <div class="legend-selection-box__header-inner">
@@ -17,17 +17,15 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(countyObj, coIdx) in selectionOfColor(selectionColor)" :key="coIdx">
+              <tr v-for="(countyObj, coIdx) in currSelectionsData.get(selectionColor).values()" :key="coIdx">
                 <td>{{ countyObj.countyName }}, {{ countyObj.stateName }}</td>
-                <td align="right">{{ countyObj.countyPop.toLocaleString()  }}</td>
+                <td align="right">{{ countyObj.countyPop.toLocaleString() }}</td>
               </tr>
             </tbody>
             <tfoot>
               <tr>
                 <td align="left" class="total-population-cell-name">Total Population</td>
-                <td align="right" class="total-population-cell-value">
-                  {{ selectionPopTotalFromColor(selectionColor).toLocaleString() }}
-                </td>
+                <td align="right" class="total-population-cell-value">{{ popTotalFromColorGroup(selectionColor).toLocaleString() }}</td>
               </tr>
             </tfoot>
           </table>
@@ -38,16 +36,16 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 
 export default {
   name: 'MapLegend',
   computed: {
-    ...mapGetters([
-      'currSelectionsColors', 
-      'selectionOfColor', 
-      'selectionPopTotalFromColor'
-    ])
+    ...mapState(['currSelectionsData']),
+    ...mapGetters(['popTotalFromColorGroup']),
+    selectedColorGroups(){
+      return Array.from(this.currSelectionsData.keys());
+    }
   }
 }
 </script>

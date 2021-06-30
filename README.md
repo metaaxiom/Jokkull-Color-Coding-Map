@@ -5,7 +5,7 @@
 
 The app is built on Vue.js (v3) with Vuex for state management. D3.js is used to generate the interactive map, and the Census API is queried for population data.
 
-[You can preview the app on Replit](https://replit.com/join/zflgkgzmjw-metaaxiom). Note that the version posted there may not always be the most recent one.
+[You can preview the app on Replit](https://replit.com/join/tyghgmriur-metaaxiom). Note that the version posted there may not always be the most recent one.
 
 ## :clipboard: To-Do's
 
@@ -20,13 +20,13 @@ The app is built on Vue.js (v3) with Vuex for state management. D3.js is used to
 
 ## :date: Update History
 
-### Version 0.4.0
+### Version 0.4.0-alpha
 
 * [x] Rewrote the whole app in Vue.js, to simplify the process of re-rendering the map legend with new data.
 * [x] Added grouping by selection color. Also, the population totals are now calculated for each group seperately.
 * [x] Fixed the delay between making a selection and seeing the relevant data on the map legend. Instead of loading data piece-by-piece, county-by-county on select, all data is now fetched from the Census API in bulk, on page load.
 * [x] Expanded this README with update history and other information.
 
-### Version 0.1.0
+### Version 0.1.0-alpha
 
 * Prototype / proof of concept.

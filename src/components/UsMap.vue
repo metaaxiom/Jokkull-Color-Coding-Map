@@ -34,11 +34,13 @@ export default {
 
       //const width = 960;
       //const height = 600;
-      let self = this;
+      console.log('d3', d3);
 
       var svg = d3.select('svg');
       var path = d3.geoPath().projection(null);
       var features = svg.append('g');
+
+      let self = this;
 
       /* Zooming functionality */
       var zoom = d3.zoom()
@@ -77,19 +79,19 @@ export default {
             }
           });
         
-        let hoverEnabled = false;
+        let shiftDragEnabled = false;
         features
           .on('mousedown', x => {
             if(d3.event.shiftKey){
-              hoverEnabled = true
+              shiftDragEnabled = true
             }
           })
           .on('mouseup', x => {
-            hoverEnabled = false
+            shiftDragEnabled = false
           });
 
         features.selectAll("path").on('mouseover', function(target, d){
-          if(hoverEnabled){
+          if(shiftDragEnabled){
             if(this.style.fill == ''){
               let countyFIPS = target.id;
               let selectionColor = self.currSelectionColor;
@@ -100,6 +102,25 @@ export default {
             }
           }
         })
+
+        // tooltip
+        let tooltip = d3.select('#map-svg-wrapper')
+          .append('div')
+          .attr('id', 'mapHoverTooltip');
+
+        features.selectAll('path').on('mouseover', function(){
+          tooltip.style('visibility', 'visible');
+        });
+
+        features.selectAll('path').on('mousemove', function(target){
+          let hovCountyDatumObj = self.allCountyData.get(target.id);
+          tooltip.text(`${hovCountyDatumObj.countyName}, ${hovCountyDatumObj.stateName}`);
+          tooltip.style('top', `${d3.event.pageY - 15}px`);
+          tooltip.style('left', `${d3.event.pageX + 15}px`);
+        });
+        features.selectAll('path').on('mouseout', function(){
+          tooltip.style('visibility', 'hidden');
+        });
         /* EVENTS & INTERACTIONS - END */
 
         features.append("path")
@@ -120,7 +141,8 @@ export default {
 <style>
 #map-svg-wrapper {
   display: inline-block;
-  border: 1px solid #ddd;
+  border: 1px solid #26282c;
+  background-color: #2f3136;
 }
 
 .county {
@@ -141,5 +163,16 @@ export default {
 }
 .overlay {
   fill: none;
+}
+
+#mapHoverTooltip {
+  position: absolute;
+  visibility: hidden;
+  background-color: #fff;
+  color: #000;
+  border: 1px solid #000;
+  border-radius: 2px;
+  padding: 1px 2px;
+  font-size: 0.8em;
 }
 </style>

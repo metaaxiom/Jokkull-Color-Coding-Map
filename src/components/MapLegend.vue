@@ -52,6 +52,8 @@ export default {
 
 <style scoped>
 .legend-selection-container {
+  background-color: #2f3136;
+  color: #fff;
   margin-bottom: 10px;
 }
 .legend-selection-container:last-child {
@@ -78,14 +80,14 @@ table {
   border-collapse: collapse;
 }
 table thead {
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #26282c;
   font-weight: normal;
   text-transform: uppercase;
-  color: #646464;
+  color: #b0b0b0;
   font-size: 0.7em;
 }
 table thead th {
-  padding-bottom: 2px;
+  padding-bottom: 4px;
 }
 table tbody tr:first-child td {
   padding-top: 8px;

@@ -16,6 +16,7 @@ The app is built on Vue.js (v3) with Vuex for state management. D3.js is used to
 * [ ] Ability to save maps as a "key".
 * [ ] Fix sticky shift multi-selection issue.
 * [ ] See county and state names in tooltip on hover.
+* [ ] Make small counties easier to select.
 * [ ] Improve the appearance of the UI.
 
 ## :date: Update History

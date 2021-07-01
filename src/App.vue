@@ -27,6 +27,7 @@ export default {
 body {
   margin: 0;
   font-family: 'Lato';
+  background-color: #36393f;
 }
 #main-content-container {
   margin: 0 auto;

@@ -53,8 +53,9 @@ export default {
   margin-top: 8px;
 }
 .color-panel-label {
-  font-size: 0.8em;
-  text-transform: uppercase;
+  font-size: 0.9em;
+  font-weight: bold;
+  color: #fff;
 }
 #selection-color-picker {
   margin-right: 4px;
@@ -64,7 +65,7 @@ export default {
 }
 .former-color-box {
   display: inline-block;
-  border: 1px solid black;
+  border: 1px solid #26282c;
   height: 15px;
   width: 15px;
   margin: 3px;

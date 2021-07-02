@@ -71,22 +71,7 @@ export default {
           .attr('pointer-events', 'visible')
           .on('click', function(target){
             if(d3.event.shiftKey){
-              let countyFIPS = target.id;
-              let selectionColor = self.currSelectionColor;
-              
-              if(this.style.fill == ''){
-                // if not selected, add new entry
-                this.style.fill = selectionColor;
-                self.saveFormerSelectionColor(); // won't save duplicates
-                self.addCountyToSelectionsData({countyFIPS, selectionColor});
-              }else{
-                if(this.style.fill != selectionColor){
-                  // selected, but with a different color
-                  this.style.fill = selectionColor;
-                  // update selectionColor in currSelectionsData
-                  self.changeCountySelectionColor({countyFIPS, newSelectionColor: selectionColor});
-                }
-              }
+              self.makeSelection({countyFIPS: target.id, countyPath: this});
             }
           });
         
@@ -104,14 +89,7 @@ export default {
         features.selectAll('path').on('mouseover', function(target, d){
           tooltip.style('visibility', 'visible');
           if(shiftDragEnabled){
-            if(this.style.fill == ''){
-              let countyFIPS = target.id;
-              let selectionColor = self.currSelectionColor;
-
-              this.style.fill = selectionColor;
-              self.saveFormerSelectionColor(); // won't save duplicates
-              self.addCountyToSelectionsData({countyFIPS, selectionColor});
-            }
+            self.makeSelection({countyFIPS: target.id, countyPath: this});
           }
         })
         
@@ -136,6 +114,23 @@ export default {
           .attr("class", "state-border")
           .attr("d", path);
       });
+    },
+    makeSelection({countyFIPS, countyPath}){
+      let selectionColor = this.currSelectionColor;
+      
+      if(countyPath.style.fill == ''){
+        // if not selected, add new entry
+        countyPath.style.fill = selectionColor;
+        this.saveFormerSelectionColor(); // won't save duplicates
+        this.addCountyToSelectionsData({countyFIPS, selectionColor});
+      }else{
+        if(countyPath.style.fill != selectionColor){
+          // selected, but with a different color
+          countyPath.style.fill = selectionColor;
+          // update selectionColor in currSelectionsData
+          this.changeCountySelectionColor({countyFIPS, newSelectionColor: selectionColor});
+        }
+      }
     }
   }
 }

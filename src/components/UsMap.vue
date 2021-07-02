@@ -58,6 +58,11 @@ export default {
         if (error) throw error;
 
         /* EVENTS & INTERACTIONS - START */
+        // tooltip
+        let tooltip = d3.select('#map-svg-wrapper')
+          .append('div')
+          .attr('id', 'mapHoverTooltip');
+        
         features.selectAll('path')
           .data(topojson.feature(us, us.objects.counties).features)
           .enter()
@@ -90,7 +95,8 @@ export default {
             shiftDragEnabled = false
           });
 
-        features.selectAll("path").on('mouseover', function(target, d){
+        features.selectAll('path').on('mouseover', function(target, d){
+          tooltip.style('visibility', 'visible');
           if(shiftDragEnabled){
             if(this.style.fill == ''){
               let countyFIPS = target.id;
@@ -102,16 +108,7 @@ export default {
             }
           }
         })
-
-        // tooltip
-        let tooltip = d3.select('#map-svg-wrapper')
-          .append('div')
-          .attr('id', 'mapHoverTooltip');
-
-        features.selectAll('path').on('mouseover', function(){
-          tooltip.style('visibility', 'visible');
-        });
-
+        
         features.selectAll('path').on('mousemove', function(target){
           let hovCountyDatumObj = self.allCountyData.get(target.id);
           tooltip.text(`${hovCountyDatumObj.countyName}, ${hovCountyDatumObj.stateName}`);

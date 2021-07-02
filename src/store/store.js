@@ -1,18 +1,20 @@
+import { selection } from 'd3';
 import { createStore } from 'vuex';
 
 const state = {
   allCountyData: new Map(),
-  currSelectionsData: new Map(),
+  currSelectionsData: {},
   currSelectionColor: '',
   formerSelectionsColors: []
 };
 
 const getters = {
-  popTotalFromColorGroup: (state) => (selectionColor) => {
+  popTotalForColorGroup: (state) => (selectionColor) => {
     let sum = 0;
-    state.currSelectionsData.get(selectionColor).forEach(countyDatumObj => {
+    for(let cdoIdx in state.currSelectionsData[selectionColor]){
+      let countyDatumObj = state.currSelectionsData[selectionColor][cdoIdx];
       sum += countyDatumObj.countyPop;
-    });
+    }
     return sum;
   }
 };
@@ -22,11 +24,22 @@ const mutations = {
     state.allCountyData.set(countyDatumObj.FIPS, countyDatumObj);
   },
   addColorGroupToSelectionsData(state, selectionColor){
-    state.currSelectionsData.set(selectionColor, new Map());
+    state.currSelectionsData[selectionColor] = {};
   },
   addCountyToSelectionsData(state, {countyFIPS, selectionColor}){
-    state.currSelectionsData.get(selectionColor)
-      .set(countyFIPS, {...state.allCountyData.get(countyFIPS), selectionColor});
+    state.currSelectionsData[selectionColor][countyFIPS] = {
+      ...state.allCountyData.get(countyFIPS), selectionColor
+    }
+  },
+  addCountyToSelectionsDataDirectly(state, countyDatumObj){
+    state.currSelectionsData[countyDatumObj.selectionColor][countyDatumObj.FIPS] = countyDatumObj;
+  },
+  removeCountyFromSelectionData(state, {countyFIPS, selectionColor}){
+    if(Object.keys(state.currSelectionsData[selectionColor]).length == 1){
+      delete state.currSelectionsData[selectionColor];
+    }else{
+      delete state.currSelectionsData[selectionColor][countyFIPS];
+    }
   },
   updateCurrSelectionColor(state, newColor){
     state.currSelectionColor = newColor;
@@ -71,16 +84,37 @@ const actions = {
   },
   addCountyToSelectionsData({state, commit}, {countyFIPS, selectionColor}){
     // if currSelectionsData has no entry for color, add one
-    if(!state.currSelectionsData.has(selectionColor)){
+    if(!state.currSelectionsData.hasOwnProperty(selectionColor)){
       commit('addColorGroupToSelectionsData', selectionColor);
     }
     // don't add duplicates
-    if(!state.currSelectionsData.get(selectionColor).has(countyFIPS)){
+    if(!state.currSelectionsData[selectionColor].hasOwnProperty(countyFIPS)){
       commit('addCountyToSelectionsData', {countyFIPS, selectionColor});
     }
-    state.currSelectionsData.get(selectionColor).forEach(countyObj => {
-      console.log(countyObj.countyName);
-    });
+  },
+  removeCountyFromSelectionData({state, commit}, {countyFIPS}){
+    let removedCountyDatumObj = null;
+    for(let cgdIdx in state.currSelectionsData){
+      let colorGroupData = state.currSelectionsData[cgdIdx];
+      if(colorGroupData.hasOwnProperty(countyFIPS)){
+        removedCountyDatumObj = colorGroupData[countyFIPS];
+        commit('removeCountyFromSelectionData', {countyFIPS, selectionColor: cgdIdx})
+      }
+    }
+    return removedCountyDatumObj;
+  },
+  changeCountySelectionColor({state, dispatch, commit}, {countyFIPS, newSelectionColor}){
+    dispatch('removeCountyFromSelectionData', {countyFIPS})
+      .then(removedCountyDatumObj => {
+        let updatedCountyDatumObj = {...removedCountyDatumObj};
+        updatedCountyDatumObj.selectionColor = newSelectionColor;
+
+        // if currSelectionsData has no entry for color, add one
+        if(!state.currSelectionsData.hasOwnProperty(newSelectionColor)){
+          commit('addColorGroupToSelectionsData', newSelectionColor);
+        }
+        commit('addCountyToSelectionsDataDirectly', updatedCountyDatumObj);
+      });
   }
 };
 

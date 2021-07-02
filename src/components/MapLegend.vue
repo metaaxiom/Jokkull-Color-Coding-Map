@@ -1,10 +1,10 @@
 <template>
   <div id="map-legend">
-    <div v-for="(selectionColor, scIdx) in selectedColorGroups" :key="scIdx" class="legend-selection-container">
-      <div class="legend-selection-box" :style="`border-color: ${selectionColor};`">
-        <div class="legend-selection-box__header" :style="`background-color: ${selectionColor};`">
+    <div v-for="(colorGroupData, colorGroupHex, cgdIdx) in currSelectionsData" :key="cgdIdx" class="legend-selection-container">
+      <div class="legend-selection-box" :style="`border-color: ${colorGroupHex};`">
+        <div class="legend-selection-box__header" :style="`background-color: ${colorGroupHex};`">
           <div class="legend-selection-box__header-inner">
-            Group {{ scIdx + 1 }}
+            Group {{ cgdIdx + 1 }}
           </div>
         </div>
 
@@ -17,7 +17,8 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(countyObj, coIdx) in currSelectionsData.get(selectionColor).values()" :key="coIdx">
+              
+              <tr v-for="(countyObj, coIdx) in colorGroupData" :key="coIdx">
                 <td>{{ countyObj.countyName }}, {{ countyObj.stateName }}</td>
                 <td align="right">{{ countyObj.countyPop.toLocaleString() }}</td>
               </tr>
@@ -25,7 +26,7 @@
             <tfoot>
               <tr>
                 <td align="left" class="total-population-cell-name">Total Population</td>
-                <td align="right" class="total-population-cell-value">{{ popTotalFromColorGroup(selectionColor).toLocaleString() }}</td>
+                <td align="right" class="total-population-cell-value">{{ popTotalForColorGroup(colorGroupHex).toLocaleString() }}</td>
               </tr>
             </tfoot>
           </table>
@@ -42,10 +43,10 @@ export default {
   name: 'MapLegend',
   computed: {
     ...mapState(['currSelectionsData']),
-    ...mapGetters(['popTotalFromColorGroup']),
-    selectedColorGroups(){
-      return Array.from(this.currSelectionsData.keys());
-    }
+    ...mapGetters(['popTotalForColorGroup']),
+    // selectedColorGroups(){
+    //   return Array.from(Object.keys(this.currSelectionsData));
+    // }
   }
 }
 </script>

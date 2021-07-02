@@ -25,6 +25,7 @@ export default {
     ...mapActions([
       'fetchAllCountyData',
       'addCountyToSelectionsData',
+      'changeCountySelectionColor',
       'saveFormerSelectionColor'
     ]),
     init(){
@@ -34,8 +35,6 @@ export default {
 
       //const width = 960;
       //const height = 600;
-      console.log('d3', d3);
-
       var svg = d3.select('svg');
       var path = d3.geoPath().projection(null);
       var features = svg.append('g');
@@ -72,14 +71,21 @@ export default {
           .attr('pointer-events', 'visible')
           .on('click', function(target){
             if(d3.event.shiftKey){
-              // prevent duplicate insertion fetching for selected counties
+              let countyFIPS = target.id;
+              let selectionColor = self.currSelectionColor;
+              
               if(this.style.fill == ''){
-                let countyFIPS = target.id;
-                let selectionColor = self.currSelectionColor;
-
+                // if not selected, add new entry
                 this.style.fill = selectionColor;
                 self.saveFormerSelectionColor(); // won't save duplicates
                 self.addCountyToSelectionsData({countyFIPS, selectionColor});
+              }else{
+                if(this.style.fill != selectionColor){
+                  // selected, but with a different color
+                  this.style.fill = selectionColor;
+                  // update selectionColor in currSelectionsData
+                  self.changeCountySelectionColor({countyFIPS, newSelectionColor: selectionColor});
+                }
               }
             }
           });

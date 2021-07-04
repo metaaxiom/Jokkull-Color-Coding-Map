@@ -9,17 +9,22 @@ The app is built on Vue.js (v3) with Vuex for state management. D3.js is used to
 
 ## :clipboard: To-Do's
 
-* [ ] Ability to change the color of existing selections.
 * [ ] Ability to remove existing selections.
-* [ ] Ability to assign names to selections.
-* [ ] Ability to toggle (show / hide) selection group.
-* [ ] Ability to save maps as a "key".
+* [ ] Ability to save maps as a "key", and load them later.
 * [ ] Fix sticky shift multi-selection issue.
-* [ ] See county and state names in tooltip on hover.
-* [ ] Make small counties easier to select.
-* [ ] Improve the appearance of the UI.
+* [ ] Ability to reset the map's position.
+* [ ] Show loading notification before map data loads.
 
 ## :date: Update History
+
+### Version 0.7.0-alpha
+
+* [x] Ability to change the color of existing selections.
+* [x] Ability to assign names to selections.
+* [x] Ability to toggle (show / hide) selection group.
+* [x] See county and state names in tooltip on hover.
+* [x] Make small counties easier to select (by decreasing stroke width when zoomed in).
+* [x] Improve the appearance of the UI.
 
 ### Version 0.4.0-alpha
 

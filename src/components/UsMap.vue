@@ -19,7 +19,10 @@ export default {
     ...mapState(['allCountyData', 'currSelectionsData', 'currSelectionColor'])
   },
   mounted(){
-    this.init();
+    let self = this;
+    this.fetchAllCountyData().then(() => {
+      self.init.call(self);
+    })
   },
   methods: {
     ...mapActions([
@@ -29,10 +32,6 @@ export default {
       'saveFormerSelectionColor'
     ]),
     init(){
-      this.fetchAllCountyData().then(() => {
-        //console.log('All data fetched:', this.allCountyData);
-      })
-
       //const width = 960;
       //const height = 600;
       var svg = d3.select('svg');
@@ -49,7 +48,15 @@ export default {
         .scaleExtent([1, 10])
         .on('zoom', function() {
           features.selectAll('path')
-          .attr('transform', d3.event.transform);
+          .attr('transform', d3.event.transform)
+
+          if(d3.event.transform.k >= 5){
+            features.selectAll('path')
+            .attr('stroke-width', '0.3')
+          }else{
+            features.selectAll('path')
+            .attr('stroke-width', '1')
+          }
         });
       svg.call(zoom);
 
@@ -107,12 +114,14 @@ export default {
         features.append("path")
           .datum(topojson.mesh(us, us.objects.counties, function(a, b) { return a !== b && !(a.id / 1000 ^ b.id / 1000); }))
           .attr("class", "county-border")
-          .attr("d", path);
+          .attr("d", path)
+          .attr("stroke-width", self.currStrokeWidth);
         
         features.append("path")
           .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
           .attr("class", "state-border")
-          .attr("d", path);
+          .attr("d", path)
+          .attr("stroke-width", self.currStrokeWidth);
       });
     },
     makeSelection({countyFIPS, countyPath}){
@@ -144,20 +153,19 @@ export default {
 }
 
 .county {
-  fill: #ccc;
+  fill: #eaeaea;
   cursor: pointer;
 }
 .county:hover {
-  fill: #101010;
+  fill: #dddddd;
 }
 .county-border {
   fill: none;
-  stroke: #eee;
+  stroke: #ccc;
 }
 .state-border {
   fill: none;
-  stroke-width: 1px;
-  stroke: #eee;
+  stroke: #ccc;
 }
 .overlay {
   fill: none;

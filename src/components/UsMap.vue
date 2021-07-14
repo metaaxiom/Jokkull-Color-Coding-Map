@@ -1,6 +1,10 @@
 <template>
   <div id="map-svg-wrapper">
-    <svg id="map-svg" width="960" height="600"></svg>
+    <div id="map-control-toolbar">
+      <label for="map-control-selection-on-check" id="map-control-selection-on-label">Selecting</label>
+      <input type="checkbox" id="map-control-selection-on-check" v-model="isSelectingCheck">
+    </div>
+    <svg id="map-svg" width="1080" height="675"></svg>
   </div>
 </template>
 
@@ -13,10 +17,14 @@ import { mapState, mapActions } from 'vuex';
 export default {
   name: 'UsMap',
   data(){
-    return {}
+    return {
+      isSelectingCheck: false,
+      isDragSelecting: false,
+      isZooming: false
+    }
   },
   computed: {
-    ...mapState(['allCountyData', 'currSelectionsData', 'currSelectionColor'])
+    ...mapState(['allCountyData', 'currSelectionsData', 'currSelectionColor', 'defaultCountyEleFill'])
   },
   mounted(){
     let self = this;
@@ -31,6 +39,9 @@ export default {
       'changeCountySelectionColor',
       'saveFormerSelectionColor'
     ]),
+    test(){
+      console.log('sdfs');
+    },
     init(){
       //const width = 960;
       //const height = 600;
@@ -39,27 +50,6 @@ export default {
       var features = svg.append('g');
 
       let self = this;
-
-      /* Zooming functionality */
-      var zoom = d3.zoom()
-        .filter(() => {
-          return !d3.event.shiftKey;
-        })
-        .scaleExtent([1, 10])
-        .on('zoom', function() {
-          features.selectAll('path')
-          .attr('transform', d3.event.transform)
-
-          if(d3.event.transform.k >= 5){
-            features.selectAll('path')
-            .attr('stroke-width', '0.3')
-          }else{
-            features.selectAll('path')
-            .attr('stroke-width', '1')
-          }
-        });
-      svg.call(zoom);
-
       d3.json('https://d3js.org/us-10m.v2.json', function (error, us) {
         if (error) throw error;
 
@@ -74,37 +64,44 @@ export default {
           .enter()
           .append('path')
           .attr('class', 'county')
+          .attr('id', function(countyEle){return 'f' + countyEle.id})
           .attr('d', path)
           .attr('pointer-events', 'visible')
-          .on('click', function(target){
-            if(d3.event.shiftKey){
-              self.makeSelection({countyFIPS: target.id, countyPath: this});
+          .on('click', function(countyGeoObj){
+            if(self.isSelectingCheck){
+              // this is county HTML element
+              self.makeSelection({countyFIPS: countyGeoObj.id, currFill: this.style.fill});
             }
           });
         
-        let shiftDragEnabled = false;
         features
           .on('mousedown', x => {
-            if(d3.event.shiftKey){
-              shiftDragEnabled = true
+            // d3.event.stopImmediatePropagation();
+            if(self.isSelectingCheck){
+              self.isDragSelecting = true;
             }
           })
           .on('mouseup', x => {
-            shiftDragEnabled = false
+            // will only run mouseup if isSelectingCheck == true
+            // d3 zoom consumes event otherwise
+            self.isDragSelecting = false;
           });
 
         features.selectAll('path').on('mouseover', function(target, d){
-          tooltip.style('visibility', 'visible');
-          if(shiftDragEnabled){
-            self.makeSelection({countyFIPS: target.id, countyPath: this});
+          if(self.isDragSelecting){
+            self.makeSelection({countyFIPS: target.id, currFill: this.style.fill});
+          }else{
+            if(!self.isZooming){
+              tooltip.style('visibility', 'visible');
+            }
           }
         })
-        
         features.selectAll('path').on('mousemove', function(target){
           let hovCountyDatumObj = self.allCountyData.get(target.id);
+          let mapSvgBounds = document.getElementById('map-svg').getBoundingClientRect();
           tooltip.text(`${hovCountyDatumObj.countyName}, ${hovCountyDatumObj.stateName}`);
-          tooltip.style('top', `${d3.event.pageY - 15}px`);
-          tooltip.style('left', `${d3.event.pageX + 15}px`);
+          tooltip.style('left', `${d3.event.pageX - mapSvgBounds.x + 15}px`);
+          tooltip.style('top', `${d3.event.pageY - mapSvgBounds.y - 15}px`);
         });
         features.selectAll('path').on('mouseout', function(){
           tooltip.style('visibility', 'hidden');
@@ -122,21 +119,50 @@ export default {
           .attr("class", "state-border")
           .attr("d", path)
           .attr("stroke-width", self.currStrokeWidth);
+        
+        /* Zooming functionality */
+        svg.call(
+          d3.zoom()
+            .filter(() => {
+              return !self.isSelectingCheck;
+            })
+            .scaleExtent([1 / 2, 10])
+            .on('start', function(){
+              self.isZooming = true;
+              tooltip.style('visibility', 'hidden');
+            })
+            .on('zoom', function(){
+              features.attr('transform', d3.event.transform);
+
+              if(d3.event.transform.k >= 5){
+                features.selectAll('path')
+                .attr('stroke-width', '0.2')
+              }else{
+                features.selectAll('path')
+                .attr('stroke-width', '1')
+              }
+            })
+            .on('end', function(){
+              self.isZooming = false;
+            })
+        );
       });
     },
-    makeSelection({countyFIPS, countyPath}){
+    makeSelection({countyFIPS, currFill}){
       let selectionColor = this.currSelectionColor;
-      
-      if(countyPath.style.fill == ''){
-        // if not selected, add new entry
-        countyPath.style.fill = selectionColor;
+      // currFill = this.rgbToHex(currFill); // won't convert if already hex
+
+      if(currFill == '' || currFill == this.defaultCountyEleFill){
+        // not selected or selected w/ default color, so fill & add new entry
+        d3.select(`#f${countyFIPS}`).style('fill', selectionColor);
         this.saveFormerSelectionColor(); // won't save duplicates
         this.addCountyToSelectionsData({countyFIPS, selectionColor});
       }else{
-        if(countyPath.style.fill != selectionColor){
-          // selected, but with a different color
-          countyPath.style.fill = selectionColor;
-          // update selectionColor in currSelectionsData
+        // already selected w/ non-default color
+        // if active selecting color is different from curr fill, allow color change
+        // otherwise, don't allow duplicate selection
+        if(selectionColor != currFill){
+          d3.select(`#f${countyFIPS}`).style('fill', selectionColor);
           this.changeCountySelectionColor({countyFIPS, newSelectionColor: selectionColor});
         }
       }
@@ -146,10 +172,34 @@ export default {
 </script>
 
 <style>
+@import '../styles/variables.css';
+
 #map-svg-wrapper {
+  position: relative;
+  background-color: var(--bg-dark);
+}
+
+#map-control-toolbar {
+  position: absolute;
+  top: 1%;
+  right: 1%;
+  display: flex;
+  align-items: center;
+  padding: 2px 6px;
+  background: #fff;
+  border: 1px solid #000;
+  border-radius: 3px;
+}
+#map-control-selection-on-label {
   display: inline-block;
-  border: 1px solid #26282c;
-  background-color: #2f3136;
+  font-size: 14px;
+  color: #000;
+}
+#map-control-selection-on-check {
+  margin: 0 0 0 6px;
+  height: 16px;
+  width: 16px;
+  cursor: pointer;
 }
 
 .county {
@@ -180,5 +230,13 @@ export default {
   border-radius: 2px;
   padding: 1px 2px;
   font-size: 0.8em;
+  white-space: nowrap;
+  /* Prevent tooltip text highlighting */
+  -webkit-touch-callout: none; /* iOS Safari */
+  -webkit-user-select: none; /* Safari */
+  -khtml-user-select: none; /* Konqueror HTML */
+  -moz-user-select: none; /* Old versions of Firefox */
+  -ms-user-select: none; /* Internet Explorer/Edge */
+  user-select: none; /* Non-prefixed version */
 }
 </style>

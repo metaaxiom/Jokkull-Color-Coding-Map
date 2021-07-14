@@ -19,8 +19,13 @@ export default {
 </script>
 
 <style>
+@import '../styles/variables.css';
+
 #map-sidebar {
-  margin-left: 20px;
+  padding: 15px;
   flex-basis: 100%;
+  background-color: var(--bg-light);
+  max-height: 675px;
+  overflow-y: scroll;
 }
 </style>

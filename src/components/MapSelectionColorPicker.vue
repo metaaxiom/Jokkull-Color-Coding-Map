@@ -1,9 +1,22 @@
 <template>
   <div id="color-panel-container">
-    <input type="color" v-model="currColorPickerVal" id="selection-color-picker">
-    <label for="selection-color-picker" class="color-panel-label">Current Color</label>
-    <div id="former-colors-panel-container">
-      <div class="color-panel-label">Former colors:</div>
+    
+    <div id="current-color-panel">
+      <div 
+        id="selection-color-picker-wrapper" 
+        :style="`background-color: ${currColorPickerVal};`"
+      >
+        <input 
+          type="color" 
+          v-model="currColorPickerVal" 
+          id="selection-color-picker"
+        >
+      </div>
+      <label for="selection-color-picker" class="color-panel-label">Current Color</label>
+    </div>
+    
+    <div id="former-colors-panel-container" v-if="formerSelectionsColors.length > 0">
+      <div class="color-panel-label">Used Colors</div>
       <div id="former-colors-boxes-container">
         <div 
           v-for="(formerColor, fcIdx) in formerSelectionsColors" 
@@ -23,12 +36,10 @@ import { mapState, mapActions } from 'vuex';
 export default {
   name: 'MapSelectionColorPicker',
   data(){
-    return {
-      defaultColor: '#ff4646'
-    }
+    return {}
   },
   computed: {
-    ...mapState(['currSelectionColor', 'formerSelectionsColors']),
+    ...mapState(['currSelectionColor', 'formerSelectionsColors', 'defaultSelectionColor']),
     currColorPickerVal: {
       get(){
         return this.currSelectionColor;
@@ -42,33 +53,56 @@ export default {
     ...mapActions(['updateCurrSelectionColor'])
   },
   mounted(){
-    this.updateCurrSelectionColor(this.defaultColor);
+    this.updateCurrSelectionColor(this.defaultSelectionColor);
   }
 }
 </script>
 
 <style>
+#current-color-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-dark);
+  border-radius: 12px;
+  padding-right: 10px;
+}
+
 #former-colors-panel-container {
   min-height: 60px;
   margin-top: 8px;
 }
 .color-panel-label {
-  font-size: 0.9em;
+  font-size: 0.8em;
   font-weight: bold;
   color: #fff;
 }
+#selection-color-picker-wrapper,
 #selection-color-picker {
-  margin-right: 4px;
+  display: inline-block;
+  border-radius: 100%;
+}
+#selection-color-picker-wrapper {
+  margin-right: 6px;
+}
+#selection-color-picker {
+  opacity: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  margin: 0;
+  border: none;
+  cursor: pointer;
 }
 #former-colors-boxes-container {
-  margin: 3px -3px 0 -3px;
+  margin-top: 4px;
 }
 .former-color-box {
   display: inline-block;
-  border: 1px solid #26282c;
   height: 15px;
   width: 15px;
-  margin: 3px;
+  margin-right: 3px;
+  border-radius: 100%;
   cursor: pointer;
 }
 </style>

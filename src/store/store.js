@@ -5,7 +5,9 @@ const state = {
   allCountyData: new Map(),
   currSelectionsData: {},
   currSelectionColor: '',
-  formerSelectionsColors: []
+  defaultSelectionColor: '#ff4646',
+  formerSelectionsColors: [],
+  defaultCountyEleFill: '#eaeaea'
 };
 
 const getters = {
@@ -50,6 +52,15 @@ const mutations = {
   },
   saveFormerSelectionColor(state, formerColor){
     state.formerSelectionsColors.push(formerColor);
+  },
+  assignNameToColorGrpManually(state, {colorGroupHex, nameToAssign}){
+    state.currSelectionsData[colorGroupHex].colorGroupName = nameToAssign;
+  },
+  clearSelectionData(state){
+    state.currSelectionsData = {};
+  },
+  clearColorsData(state){
+    state.formerSelectionsColors = [];
   }
 };
 
@@ -89,10 +100,12 @@ const actions = {
   addCountyToSelectionsData({state, commit}, {countyFIPS, selectionColor}){
     // if currSelectionsData has no entry for color, add one
     if(!state.currSelectionsData.hasOwnProperty(selectionColor)){
+      console.log('added new color grp to selectionsData', selectionColor);
       commit('addColorGroupToSelectionsData', selectionColor);
     }
     // don't add duplicates
     if(!state.currSelectionsData[selectionColor]['selectedCounties'].hasOwnProperty(countyFIPS)){
+      console.log('added new county to existing color group in selectiosData');
       commit('addCountyToSelectionsData', {countyFIPS, selectionColor});
     }
   },
@@ -119,6 +132,17 @@ const actions = {
         }
         commit('addCountyToSelectionsDataDirectly', updatedCountyDatumObj);
       });
+  },
+  assignNameToColorGrpManually({state, commit}, {colorGroupHex, nameToAssign}){
+    if(state.currSelectionsData.hasOwnProperty(colorGroupHex)){
+      commit('assignNameToColorGrpManually', {colorGroupHex, nameToAssign});
+    }
+  },
+  clearSelectionData({commit}){
+    commit('clearSelectionData');
+  },
+  clearColorsData({commit}){
+    commit('clearColorsData');
   }
 };
 
